@@ -1,0 +1,525 @@
+import React, { useState } from 'react';
+import {
+  Check,
+  Image as ImageIcon,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react';
+import { CATEGORY_META } from '../data/defaultPortalData';
+import { AssessmentCategory, HeaderBranding, TestCardItem } from '../types/assessment';
+
+interface AdminPanelModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  tests: TestCardItem[];
+  branding: HeaderBranding;
+  onAddTest: (item: Omit<TestCardItem, 'id'>) => void;
+  onUpdateTest: (item: TestCardItem) => void;
+  onDeleteTest: (id: string) => void;
+  onUpdateBranding: (branding: HeaderBranding) => void;
+  onResetDefaults: () => void;
+}
+
+type AdminSectionTab = 'tests' | 'branding';
+
+const CATEGORY_DEFAULT_ICON: Record<AssessmentCategory, string> = {
+  interactive: 'trophy',
+  topic: 'book-open',
+  practice: 'clipboard-check',
+};
+
+export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
+  isOpen,
+  onClose,
+  tests,
+  branding,
+  onAddTest,
+  onUpdateTest,
+  onDeleteTest,
+  onUpdateBranding,
+  onResetDefaults,
+}) => {
+  const [sectionTab, setSectionTab] = useState<AdminSectionTab>('tests');
+
+  // Add / Edit Test Form State
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState<AssessmentCategory>('topic');
+  const [url, setUrl] = useState('');
+  const [formError, setFormError] = useState('');
+
+  // Branding Form State
+  const [brandTitle, setBrandTitle] = useState(branding.title);
+  const [brandSubtitle, setBrandSubtitle] = useState(branding.subtitle);
+  const [brandLogoUrl, setBrandLogoUrl] = useState(branding.logoUrl);
+  const [brandingSaved, setBrandingSaved] = useState(false);
+
+  // Reset confirmation state (no window.confirm)
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  if (!isOpen) return null;
+
+  const resetTestForm = () => {
+    setEditingId(null);
+    setTitle('');
+    setDescription('');
+    setCategory('topic');
+    setUrl('');
+    setFormError('');
+  };
+
+  const handleEditClick = (item: TestCardItem) => {
+    setEditingId(item.id);
+    setTitle(item.title);
+    setDescription(item.description);
+    setCategory(item.category);
+    setUrl(item.url);
+    setFormError('');
+  };
+
+  const handleTestSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanTitle = title.trim();
+    const cleanDesc = description.trim();
+    const cleanUrl = url.trim();
+
+    if (!cleanTitle || !cleanUrl) {
+      setFormError('Please provide both a Test Title and a valid Assessment URL.');
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(cleanUrl)) {
+      setFormError('URL must start with https:// or http://');
+      return;
+    }
+
+    if (editingId) {
+      const existing = tests.find((t) => t.id === editingId);
+      onUpdateTest({
+        id: editingId,
+        title: cleanTitle,
+        description:
+          cleanDesc ||
+          'Online computer assessment module from JIT Computer Training Institute.',
+        category,
+        url: cleanUrl,
+        iconKey: existing?.iconKey ?? CATEGORY_DEFAULT_ICON[category],
+      });
+    } else {
+      onAddTest({
+        title: cleanTitle,
+        description:
+          cleanDesc ||
+          'Online computer assessment module from JIT Computer Training Institute.',
+        category,
+        url: cleanUrl,
+        iconKey: CATEGORY_DEFAULT_ICON[category],
+      });
+    }
+
+    resetTestForm();
+  };
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setBrandLogoUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleBrandingSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdateBranding({
+      title: brandTitle.trim() || 'JIT Computer Training Institute',
+      subtitle: brandSubtitle.trim() || 'Jharna Institute of Technology',
+      logoUrl: brandLogoUrl.trim() || branding.logoUrl,
+    });
+    setBrandingSaved(true);
+    window.setTimeout(() => setBrandingSaved(false), 2200);
+  };
+
+  const handleConfirmReset = () => {
+    onResetDefaults();
+    setConfirmReset(false);
+    resetTestForm();
+    setBrandTitle('JIT Computer Training Institute');
+    setBrandSubtitle('Jharna Institute of Technology');
+    setBrandLogoUrl('/src/assets/images/jit_institute_logo_1795330747046.jpg');
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-[#071633]/80 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-panel-title"
+    >
+      <div className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-2xl bg-white border border-slate-200 shadow-2xl overflow-hidden">
+        {/* Top Modal Header */}
+        <div className="bg-gradient-to-r from-[#0B1E47] to-[#1D4ED8] px-6 py-4 flex items-center justify-between text-white shrink-0">
+          <div>
+            <h2 id="admin-panel-title" className="font-display font-bold text-lg sm:text-xl">
+              Admin Portal Manager
+            </h2>
+            <p className="text-xs text-blue-100/85">
+              Changes save automatically in browser storage (jit_quiz_portal_v1)
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close Admin Panel"
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-white/85 hover:text-white hover:bg-white/15 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation Sub-Bar */}
+        <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSectionTab('tests')}
+              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                sectionTab === 'tests'
+                  ? 'bg-[#0B1E47] text-white'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              Manage Tests ({tests.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSectionTab('branding');
+                setBrandTitle(branding.title);
+                setBrandSubtitle(branding.subtitle);
+                setBrandLogoUrl(branding.logoUrl);
+              }}
+              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+                sectionTab === 'branding'
+                  ? 'bg-[#0B1E47] text-white'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              Logo &amp; Header Text
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {!confirmReset ? (
+              <button
+                type="button"
+                onClick={() => setConfirmReset(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Reset to Default</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1">
+                <span className="text-xs font-semibold text-red-800">Restore 16 defaults?</span>
+                <button
+                  type="button"
+                  onClick={handleConfirmReset}
+                  className="px-2.5 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-semibold"
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmReset(false)}
+                  className="px-2 py-1 rounded text-xs font-semibold text-slate-600 hover:bg-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Scrollable Content Body */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          {sectionTab === 'tests' ? (
+            <>
+              {/* Add / Edit Test Form */}
+              <form
+                onSubmit={handleTestSubmit}
+                className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display font-bold text-base text-[#0B1E47]">
+                    {editingId ? 'Edit Assessment Card' : 'Add New Test Card'}
+                  </h3>
+                  {editingId && (
+                    <button
+                      type="button"
+                      onClick={resetTestForm}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="admin-test-title"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Test Title *
+                    </label>
+                    <input
+                      id="admin-test-title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="e.g., Tally Prime MCQ"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-test-category"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Category *
+                    </label>
+                    <select
+                      id="admin-test-category"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value as AssessmentCategory)}
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    >
+                      <option value="interactive">Interactive Quizzes (Navy + Gold Card)</option>
+                      <option value="topic">Topic-Wise Tests (White + Royal Blue Card)</option>
+                      <option value="practice">Practice Sets (White + Royal Blue Card)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="admin-test-url"
+                    className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  >
+                    Assessment Link (URL) *
+                  </label>
+                  <input
+                    id="admin-test-url"
+                    type="url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://docs.google.com/forms/..."
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="admin-test-desc"
+                    className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  >
+                    Short Description
+                  </label>
+                  <textarea
+                    id="admin-test-desc"
+                    rows={2}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Briefly describe topics covered in this test..."
+                    className="w-full p-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                {formError && (
+                  <p role="alert" className="text-xs font-semibold text-red-600">
+                    {formError}
+                  </p>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-sm font-semibold transition-colors"
+                  >
+                    {editingId ? (
+                      <>
+                        <Check className="w-4 h-4" aria-hidden="true" />
+                        <span>Save Changes</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" aria-hidden="true" />
+                        <span>Add Test Card</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {/* Existing Tests List */}
+              <div>
+                <h3 className="font-display font-bold text-sm text-[#0B1E47] mb-3">
+                  Published Assessments ({tests.length})
+                </h3>
+                <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl overflow-hidden bg-white">
+                  {tests.length === 0 ? (
+                    <div className="p-6 text-center text-sm text-slate-500">
+                      No tests currently configured. Add a test above or reset to defaults.
+                    </div>
+                  ) : (
+                    tests.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 text-xs font-medium text-blue-700 mb-0.5">
+                            <span>{CATEGORY_META[item.category].label}</span>
+                          </div>
+                          <div className="font-display font-bold text-sm text-[#0B1E47] truncate">
+                            {item.title}
+                          </div>
+                          <div className="text-xs text-slate-500 truncate mt-0.5">{item.url}</div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleEditClick(item)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editingId === item.id) resetTestForm();
+                              onDeleteTest(item.id);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <form onSubmit={handleBrandingSubmit} className="space-y-5 max-w-xl">
+              <div>
+                <label
+                  htmlFor="brand-title-input"
+                  className="block text-xs font-semibold text-slate-700 mb-1.5"
+                >
+                  Institute Header Title
+                </label>
+                <input
+                  id="brand-title-input"
+                  type="text"
+                  value={brandTitle}
+                  onChange={(e) => setBrandTitle(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="brand-subtitle-input"
+                  className="block text-xs font-semibold text-slate-700 mb-1.5"
+                >
+                  Institute Subtitle
+                </label>
+                <input
+                  id="brand-subtitle-input"
+                  type="text"
+                  value={brandSubtitle}
+                  onChange={(e) => setBrandSubtitle(e.target.value)}
+                  className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+
+              <div className="space-y-3">
+                <label
+                  htmlFor="brand-logo-url"
+                  className="block text-xs font-semibold text-slate-700"
+                >
+                  Logo Image URL or Upload New Image
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-xl border border-slate-200 bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
+                    {brandLogoUrl ? (
+                      <img
+                        src={brandLogoUrl}
+                        alt="Logo Preview"
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-slate-400" aria-hidden="true" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input
+                      id="brand-logo-url"
+                      type="text"
+                      value={brandLogoUrl}
+                      onChange={(e) => setBrandLogoUrl(e.target.value)}
+                      placeholder="Paste image URL or upload below"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>Upload Logo File</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoFileChange}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-sm font-semibold transition-colors"
+                >
+                  <Check className="w-4 h-4" aria-hidden="true" />
+                  <span>Save Header &amp; Logo</span>
+                </button>
+                {brandingSaved && (
+                  <span className="text-xs font-semibold text-emerald-700">
+                    Branding updated
+                  </span>
+                )}
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};

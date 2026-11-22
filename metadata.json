@@ -1,0 +1,6 @@
+{
+  "name": "TEST YOUR KNOWLEDGE — JIT Computer Training Institute",
+  "description": "Online Assessment & Practice Portal for JIT Computer Training Institute (Jharna Institute of Technology). Interactive MCQ challenges, topic-wise tests, and practice sets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
