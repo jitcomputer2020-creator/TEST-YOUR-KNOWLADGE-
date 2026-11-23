@@ -1,4 +1,10 @@
-import { HeaderBranding, PortalState, TestCardItem } from '../types/assessment';
+import {
+  GameCardItem,
+  GameIconKey,
+  HeaderBranding,
+  PortalState,
+  TestCardItem,
+} from '../types/assessment';
 
 export const STORAGE_KEY = 'jit_quiz_portal_v1';
 export const ADMIN_PIN = '8017462677';
@@ -161,8 +167,96 @@ export const DEFAULT_TESTS: TestCardItem[] = [
   },
 ];
 
+export const DEFAULT_GAMES: GameCardItem[] = [
+  {
+    id: 'game-1',
+    title: 'JIT Bike Race',
+    genre: '3D Bike Racing',
+    url: 'https://jit-bike-raxe.vercel.app/',
+    iconKey: 'bike',
+  },
+  {
+    id: 'game-2',
+    title: 'JIT Car Racing',
+    genre: 'Racing',
+    url: 'https://ctadlvid.gensparkspace.com/',
+    iconKey: 'car',
+  },
+  {
+    id: 'game-3',
+    title: 'Shooting Game',
+    genre: 'Action Shooter',
+    url: 'https://uobxshlb.gensparkspace.com/',
+    iconKey: 'crosshair',
+  },
+  {
+    id: 'game-4',
+    title: 'Super Mario Platform',
+    genre: 'Classic Arcade',
+    url: 'https://page.genspark.site/page/toolu_01FNwatmsTVEnekR9fypM2XL/super_mario_platform_game_fixed.html',
+    iconKey: 'star-gamepad',
+  },
+  {
+    id: 'game-5',
+    title: 'Car Racing',
+    genre: 'Speed Racing',
+    url: 'https://tyyembxx.gensparkspace.com/',
+    iconKey: 'flag',
+  },
+  {
+    id: 'game-6',
+    title: 'Snake Game',
+    genre: 'Classic Arcade',
+    url: 'https://gqwvnaqu.gensparkspace.com/',
+    iconKey: 'snake',
+  },
+  {
+    id: 'game-7',
+    title: 'Space Battle',
+    genre: 'Sci-Fi Shooter',
+    url: 'https://rbifeexj.genspark.space/',
+    iconKey: 'rocket',
+  },
+  {
+    id: 'game-8',
+    title: 'Car Racing 2',
+    genre: 'Turbo Racing',
+    url: 'https://txycruvo.gensparkspace.com/',
+    iconKey: 'gauge',
+  },
+  {
+    id: 'game-9',
+    title: 'Adventure Quest',
+    genre: 'Adventure',
+    url: 'https://cuxgzmtk.gensparkspace.com/',
+    iconKey: 'compass',
+  },
+  {
+    id: 'game-10',
+    title: 'War Strike',
+    genre: 'Combat Action',
+    url: 'https://iobqbtkz.gensparkspace.com/',
+    iconKey: 'shield',
+  },
+];
+
+export const GAME_ICON_OPTIONS: { value: GameIconKey; label: string }[] = [
+  { value: 'bike', label: 'Bike / Motorcycle Racing' },
+  { value: 'car', label: 'Sports Car Racing' },
+  { value: 'flag', label: 'Checkered Flag / Speed Racing' },
+  { value: 'gauge', label: 'Turbo / Speedometer' },
+  { value: 'crosshair', label: 'Crosshair / Target Shooter' },
+  { value: 'star-gamepad', label: 'Star / Platformer Arcade' },
+  { value: 'snake', label: 'Retro Snake Arcade' },
+  { value: 'rocket', label: 'Rocket / Space Shooter' },
+  { value: 'compass', label: 'Compass / Adventure Quest' },
+  { value: 'shield', label: 'Shield / Combat Strike' },
+  { value: 'gamepad', label: 'Classic Gamepad' },
+];
+
 export const DEFAULT_PORTAL_STATE: PortalState = {
   tests: DEFAULT_TESTS,
+  games: DEFAULT_GAMES,
   branding: DEFAULT_BRANDING,
 };
 

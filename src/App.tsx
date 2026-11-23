@@ -3,6 +3,7 @@ import { SearchX } from 'lucide-react';
 import { AdminPanelModal } from './components/AdminPanelModal';
 import { AssessmentCard } from './components/AssessmentCard';
 import { Footer } from './components/Footer';
+import { GamingZoneSection } from './components/GamingZoneSection';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { PinModal } from './components/PinModal';
@@ -10,6 +11,7 @@ import { WhatsAppButton } from './components/WhatsAppButton';
 import {
   CATEGORY_META,
   DEFAULT_BRANDING,
+  DEFAULT_GAMES,
   DEFAULT_PORTAL_STATE,
   DEFAULT_TESTS,
   STORAGE_KEY,
@@ -17,6 +19,7 @@ import {
 import {
   AssessmentCategory,
   FilterTab,
+  GameCardItem,
   HeaderBranding,
   PortalState,
   TestCardItem,
@@ -28,6 +31,7 @@ function loadPortalState(): PortalState {
     if (!raw) return DEFAULT_PORTAL_STATE;
     const parsed = JSON.parse(raw) as Partial<PortalState>;
     const tests = Array.isArray(parsed.tests) ? parsed.tests : DEFAULT_TESTS;
+    const games = Array.isArray(parsed.games) ? parsed.games : DEFAULT_GAMES;
     const branding =
       parsed.branding && typeof parsed.branding.title === 'string'
         ? {
@@ -37,7 +41,7 @@ function loadPortalState(): PortalState {
           }
         : DEFAULT_BRANDING;
 
-    return { tests, branding };
+    return { tests, games, branding };
   } catch {
     return DEFAULT_PORTAL_STATE;
   }
@@ -118,6 +122,31 @@ export function App() {
     setPortalState((prev) => ({
       ...prev,
       tests: prev.tests.filter((item) => item.id !== id),
+    }));
+  };
+
+  const handleAddGame = (newGame: Omit<GameCardItem, 'id'>) => {
+    const created: GameCardItem = {
+      ...newGame,
+      id: `game-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    };
+    setPortalState((prev) => ({
+      ...prev,
+      games: [...prev.games, created],
+    }));
+  };
+
+  const handleUpdateGame = (updated: GameCardItem) => {
+    setPortalState((prev) => ({
+      ...prev,
+      games: prev.games.map((item) => (item.id === updated.id ? updated : item)),
+    }));
+  };
+
+  const handleDeleteGame = (id: string) => {
+    setPortalState((prev) => ({
+      ...prev,
+      games: prev.games.filter((item) => item.id !== id),
     }));
   };
 
@@ -251,6 +280,9 @@ export function App() {
             </div>
           )}
         </section>
+
+        {/* Dedicated Gaming Zone Section right below the Tests/Quizzes */}
+        <GamingZoneSection games={portalState.games} />
       </main>
 
       <Footer branding={portalState.branding} />
@@ -269,10 +301,14 @@ export function App() {
         isOpen={adminPanelOpen}
         onClose={() => setAdminPanelOpen(false)}
         tests={portalState.tests}
+        games={portalState.games}
         branding={portalState.branding}
         onAddTest={handleAddTest}
         onUpdateTest={handleUpdateTest}
         onDeleteTest={handleDeleteTest}
+        onAddGame={handleAddGame}
+        onUpdateGame={handleUpdateGame}
+        onDeleteGame={handleDeleteGame}
         onUpdateBranding={handleUpdateBranding}
         onResetDefaults={handleResetDefaults}
       />

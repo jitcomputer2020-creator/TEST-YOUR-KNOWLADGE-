@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Check,
+  Gamepad2,
   Image as ImageIcon,
   Pencil,
   Plus,
@@ -9,22 +10,33 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { CATEGORY_META } from '../data/defaultPortalData';
-import { AssessmentCategory, HeaderBranding, TestCardItem } from '../types/assessment';
+import { CATEGORY_META, GAME_ICON_OPTIONS } from '../data/defaultPortalData';
+import {
+  AssessmentCategory,
+  GameCardItem,
+  GameIconKey,
+  HeaderBranding,
+  TestCardItem,
+} from '../types/assessment';
+import { GameIcon } from './GameIcon';
 
 interface AdminPanelModalProps {
   isOpen: boolean;
   onClose: () => void;
   tests: TestCardItem[];
+  games: GameCardItem[];
   branding: HeaderBranding;
   onAddTest: (item: Omit<TestCardItem, 'id'>) => void;
   onUpdateTest: (item: TestCardItem) => void;
   onDeleteTest: (id: string) => void;
+  onAddGame: (item: Omit<GameCardItem, 'id'>) => void;
+  onUpdateGame: (item: GameCardItem) => void;
+  onDeleteGame: (id: string) => void;
   onUpdateBranding: (branding: HeaderBranding) => void;
   onResetDefaults: () => void;
 }
 
-type AdminSectionTab = 'tests' | 'branding';
+type AdminSectionTab = 'tests' | 'games' | 'branding';
 
 const CATEGORY_DEFAULT_ICON: Record<AssessmentCategory, string> = {
   interactive: 'trophy',
@@ -36,10 +48,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   isOpen,
   onClose,
   tests,
+  games,
   branding,
   onAddTest,
   onUpdateTest,
   onDeleteTest,
+  onAddGame,
+  onUpdateGame,
+  onDeleteGame,
   onUpdateBranding,
   onResetDefaults,
 }) => {
@@ -52,6 +68,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [category, setCategory] = useState<AssessmentCategory>('topic');
   const [url, setUrl] = useState('');
   const [formError, setFormError] = useState('');
+
+  // Add / Edit Game Form State
+  const [editingGameId, setEditingGameId] = useState<string | null>(null);
+  const [gameTitle, setGameTitle] = useState('');
+  const [gameGenre, setGameGenre] = useState('');
+  const [gameUrl, setGameUrl] = useState('');
+  const [gameIconKey, setGameIconKey] = useState<GameIconKey>('gamepad');
+  const [gameCustomImageUrl, setGameCustomImageUrl] = useState('');
+  const [gameFormError, setGameFormError] = useState('');
 
   // Branding Form State
   const [brandTitle, setBrandTitle] = useState(branding.title);
@@ -73,6 +98,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setFormError('');
   };
 
+  const resetGameForm = () => {
+    setEditingGameId(null);
+    setGameTitle('');
+    setGameGenre('');
+    setGameUrl('');
+    setGameIconKey('gamepad');
+    setGameCustomImageUrl('');
+    setGameFormError('');
+  };
+
   const handleEditClick = (item: TestCardItem) => {
     setEditingId(item.id);
     setTitle(item.title);
@@ -80,6 +115,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setCategory(item.category);
     setUrl(item.url);
     setFormError('');
+  };
+
+  const handleEditGameClick = (item: GameCardItem) => {
+    setEditingGameId(item.id);
+    setGameTitle(item.title);
+    setGameGenre(item.genre);
+    setGameUrl(item.url);
+    setGameIconKey(item.iconKey);
+    setGameCustomImageUrl(item.customImageUrl ?? '');
+    setGameFormError('');
   };
 
   const handleTestSubmit = (e: React.FormEvent) => {
@@ -125,6 +170,43 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     resetTestForm();
   };
 
+  const handleGameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanTitle = gameTitle.trim();
+    const cleanGenre = gameGenre.trim();
+    const cleanUrl = gameUrl.trim();
+    const cleanCustomImg = gameCustomImageUrl.trim();
+
+    if (!cleanTitle || !cleanGenre || !cleanUrl) {
+      setGameFormError('Please provide Game Title, Genre, and a valid Game URL.');
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(cleanUrl)) {
+      setGameFormError('Game URL must start with https:// or http://');
+      return;
+    }
+
+    const payload: Omit<GameCardItem, 'id'> = {
+      title: cleanTitle,
+      genre: cleanGenre,
+      url: cleanUrl,
+      iconKey: gameIconKey,
+      customImageUrl: cleanCustomImg || undefined,
+    };
+
+    if (editingGameId) {
+      onUpdateGame({
+        id: editingGameId,
+        ...payload,
+      });
+    } else {
+      onAddGame(payload);
+    }
+
+    resetGameForm();
+  };
+
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -133,6 +215,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     reader.onload = () => {
       if (typeof reader.result === 'string') {
         setBrandLogoUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleGameImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setGameCustomImageUrl(reader.result);
       }
     };
     reader.readAsDataURL(file);
@@ -153,6 +248,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     onResetDefaults();
     setConfirmReset(false);
     resetTestForm();
+    resetGameForm();
     setBrandTitle('JIT Computer Training Institute');
     setBrandSubtitle('Jharna Institute of Technology');
     setBrandLogoUrl('/src/assets/images/jit_institute_logo_1795330747046.jpg');
@@ -188,11 +284,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
         {/* Navigation Sub-Bar */}
         <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setSectionTab('tests')}
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
                 sectionTab === 'tests'
                   ? 'bg-[#0B1E47] text-white'
                   : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
@@ -202,13 +298,25 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             </button>
             <button
               type="button"
+              onClick={() => setSectionTab('games')}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
+                sectionTab === 'games'
+                  ? 'bg-[#0B1E47] text-white'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Manage Games ({games.length})</span>
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setSectionTab('branding');
                 setBrandTitle(branding.title);
                 setBrandSubtitle(branding.subtitle);
                 setBrandLogoUrl(branding.logoUrl);
               }}
-              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors ${
+              className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
                 sectionTab === 'branding'
                   ? 'bg-[#0B1E47] text-white'
                   : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
@@ -230,7 +338,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
               </button>
             ) : (
               <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1">
-                <span className="text-xs font-semibold text-red-800">Restore 16 defaults?</span>
+                <span className="text-xs font-semibold text-red-800">
+                  Restore 16 tests &amp; 10 games?
+                </span>
                 <button
                   type="button"
                   onClick={handleConfirmReset}
@@ -252,7 +362,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
         {/* Scrollable Content Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {sectionTab === 'tests' ? (
+          {sectionTab === 'tests' && (
             <>
               {/* Add / Edit Test Form */}
               <form
@@ -425,7 +535,248 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                 </div>
               </div>
             </>
-          ) : (
+          )}
+
+          {sectionTab === 'games' && (
+            <>
+              {/* Add / Edit Game Form */}
+              <form
+                onSubmit={handleGameSubmit}
+                className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display font-bold text-base text-[#0B1E47]">
+                    {editingGameId ? 'Edit Game Card' : 'Add New Game Card'}
+                  </h3>
+                  {editingGameId && (
+                    <button
+                      type="button"
+                      onClick={resetGameForm}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="admin-game-title"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Game Title *
+                    </label>
+                    <input
+                      id="admin-game-title"
+                      type="text"
+                      value={gameTitle}
+                      onChange={(e) => setGameTitle(e.target.value)}
+                      placeholder="e.g., JIT Space Drift"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-game-genre"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Genre *
+                    </label>
+                    <input
+                      id="admin-game-genre"
+                      type="text"
+                      value={gameGenre}
+                      onChange={(e) => setGameGenre(e.target.value)}
+                      placeholder="e.g., 3D Racing, Classic Arcade, Action Shooter"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="admin-game-url"
+                    className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  >
+                    Game Link (URL) *
+                  </label>
+                  <input
+                    id="admin-game-url"
+                    type="url"
+                    value={gameUrl}
+                    onChange={(e) => setGameUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                  <div>
+                    <label
+                      htmlFor="admin-game-icon"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Select Gaming Icon
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 rounded-xl bg-[#0B1E47] shrink-0">
+                        <GameIcon
+                          iconKey={gameIconKey}
+                          customImageUrl={gameCustomImageUrl || undefined}
+                          title={gameTitle || 'Game Preview'}
+                        />
+                      </div>
+                      <select
+                        id="admin-game-icon"
+                        value={gameIconKey}
+                        onChange={(e) => setGameIconKey(e.target.value as GameIconKey)}
+                        className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      >
+                        {GAME_ICON_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-game-custom-img"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Custom Icon Image URL (Optional)
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        id="admin-game-custom-img"
+                        type="text"
+                        value={gameCustomImageUrl}
+                        onChange={(e) => setGameCustomImageUrl(e.target.value)}
+                        placeholder="https://... or upload image below"
+                        className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Upload Icon</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleGameImageFileChange}
+                            className="sr-only"
+                          />
+                        </label>
+                        {gameCustomImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setGameCustomImageUrl('')}
+                            className="text-xs font-semibold text-slate-500 hover:text-red-600"
+                          >
+                            Clear Custom Image
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {gameFormError && (
+                  <p role="alert" className="text-xs font-semibold text-red-600">
+                    {gameFormError}
+                  </p>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-sm font-semibold transition-colors"
+                  >
+                    {editingGameId ? (
+                      <>
+                        <Check className="w-4 h-4" aria-hidden="true" />
+                        <span>Save Game Changes</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" aria-hidden="true" />
+                        <span>Add Game Card</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {/* Existing Games List */}
+              <div>
+                <h3 className="font-display font-bold text-sm text-[#0B1E47] mb-3">
+                  Published Games ({games.length})
+                </h3>
+                <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl overflow-hidden bg-white">
+                  {games.length === 0 ? (
+                    <div className="p-6 text-center text-sm text-slate-500">
+                      No games currently configured. Add a game above or reset to defaults.
+                    </div>
+                  ) : (
+                    games.map((game) => (
+                      <div
+                        key={game.id}
+                        className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          <div className="p-1 rounded-xl bg-[#0B1E47] shrink-0">
+                            <GameIcon
+                              iconKey={game.iconKey}
+                              customImageUrl={game.customImageUrl}
+                              title={game.title}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-blue-700 mb-0.5">
+                              {game.genre}
+                            </div>
+                            <div className="font-display font-bold text-sm text-[#0B1E47] truncate">
+                              {game.title}
+                            </div>
+                            <div className="text-xs text-slate-500 truncate mt-0.5">
+                              {game.url}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleEditGameClick(game)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editingGameId === game.id) resetGameForm();
+                              onDeleteGame(game.id);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {sectionTab === 'branding' && (
             <form onSubmit={handleBrandingSubmit} className="space-y-5 max-w-xl">
               <div>
                 <label

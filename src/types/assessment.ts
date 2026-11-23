@@ -11,6 +11,28 @@ export interface TestCardItem {
   iconKey?: string;
 }
 
+export type GameIconKey =
+  | 'bike'
+  | 'car'
+  | 'crosshair'
+  | 'star-gamepad'
+  | 'flag'
+  | 'snake'
+  | 'rocket'
+  | 'gauge'
+  | 'compass'
+  | 'shield'
+  | 'gamepad';
+
+export interface GameCardItem {
+  id: string;
+  title: string;
+  genre: string;
+  url: string;
+  iconKey: GameIconKey;
+  customImageUrl?: string;
+}
+
 export interface HeaderBranding {
   title: string;
   subtitle: string;
@@ -19,5 +41,6 @@ export interface HeaderBranding {
 
 export interface PortalState {
   tests: TestCardItem[];
+  games: GameCardItem[];
   branding: HeaderBranding;
 }
