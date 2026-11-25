@@ -7,6 +7,7 @@ import { GamingZoneSection } from './components/GamingZoneSection';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { PinModal } from './components/PinModal';
+import { WebAppsSection } from './components/WebAppsSection';
 import { WhatsAppButton } from './components/WhatsAppButton';
 import {
   CATEGORY_META,
@@ -14,6 +15,7 @@ import {
   DEFAULT_GAMES,
   DEFAULT_PORTAL_STATE,
   DEFAULT_TESTS,
+  DEFAULT_WEB_APPS,
   STORAGE_KEY,
 } from './data/defaultPortalData';
 import {
@@ -23,6 +25,7 @@ import {
   HeaderBranding,
   PortalState,
   TestCardItem,
+  WebAppCardItem,
 } from './types/assessment';
 
 function loadPortalState(): PortalState {
@@ -32,6 +35,7 @@ function loadPortalState(): PortalState {
     const parsed = JSON.parse(raw) as Partial<PortalState>;
     const tests = Array.isArray(parsed.tests) ? parsed.tests : DEFAULT_TESTS;
     const games = Array.isArray(parsed.games) ? parsed.games : DEFAULT_GAMES;
+    const webApps = Array.isArray(parsed.webApps) ? parsed.webApps : DEFAULT_WEB_APPS;
     const branding =
       parsed.branding && typeof parsed.branding.title === 'string'
         ? {
@@ -41,7 +45,7 @@ function loadPortalState(): PortalState {
           }
         : DEFAULT_BRANDING;
 
-    return { tests, games, branding };
+    return { tests, games, webApps, branding };
   } catch {
     return DEFAULT_PORTAL_STATE;
   }
@@ -147,6 +151,31 @@ export function App() {
     setPortalState((prev) => ({
       ...prev,
       games: prev.games.filter((item) => item.id !== id),
+    }));
+  };
+
+  const handleAddWebApp = (newApp: Omit<WebAppCardItem, 'id'>) => {
+    const created: WebAppCardItem = {
+      ...newApp,
+      id: `webapp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    };
+    setPortalState((prev) => ({
+      ...prev,
+      webApps: [...prev.webApps, created],
+    }));
+  };
+
+  const handleUpdateWebApp = (updated: WebAppCardItem) => {
+    setPortalState((prev) => ({
+      ...prev,
+      webApps: prev.webApps.map((item) => (item.id === updated.id ? updated : item)),
+    }));
+  };
+
+  const handleDeleteWebApp = (id: string) => {
+    setPortalState((prev) => ({
+      ...prev,
+      webApps: prev.webApps.filter((item) => item.id !== id),
     }));
   };
 
@@ -283,6 +312,9 @@ export function App() {
 
         {/* Dedicated Gaming Zone Section right below the Tests/Quizzes */}
         <GamingZoneSection games={portalState.games} />
+
+        {/* Dedicated JIT Web Apps Section right below JIT Gaming Zone */}
+        <WebAppsSection webApps={portalState.webApps} />
       </main>
 
       <Footer branding={portalState.branding} />
@@ -302,6 +334,7 @@ export function App() {
         onClose={() => setAdminPanelOpen(false)}
         tests={portalState.tests}
         games={portalState.games}
+        webApps={portalState.webApps}
         branding={portalState.branding}
         onAddTest={handleAddTest}
         onUpdateTest={handleUpdateTest}
@@ -309,6 +342,9 @@ export function App() {
         onAddGame={handleAddGame}
         onUpdateGame={handleUpdateGame}
         onDeleteGame={handleDeleteGame}
+        onAddWebApp={handleAddWebApp}
+        onUpdateWebApp={handleUpdateWebApp}
+        onDeleteWebApp={handleDeleteWebApp}
         onUpdateBranding={handleUpdateBranding}
         onResetDefaults={handleResetDefaults}
       />

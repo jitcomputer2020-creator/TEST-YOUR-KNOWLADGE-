@@ -33,6 +33,26 @@ export interface GameCardItem {
   customImageUrl?: string;
 }
 
+export type WebAppIconKey =
+  | 'video-editor'
+  | 'code-studio'
+  | 'design-canvas'
+  | 'cloud-docs'
+  | 'presentation'
+  | 'utility-tools'
+  | 'globe-app'
+  | 'app-grid';
+
+export interface WebAppCardItem {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  url: string;
+  iconKey: WebAppIconKey;
+  customImageUrl?: string;
+}
+
 export interface HeaderBranding {
   title: string;
   subtitle: string;
@@ -42,5 +62,6 @@ export interface HeaderBranding {
 export interface PortalState {
   tests: TestCardItem[];
   games: GameCardItem[];
+  webApps: WebAppCardItem[];
   branding: HeaderBranding;
 }

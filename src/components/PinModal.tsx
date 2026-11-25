@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Eye, EyeOff, Lock, ShieldCheck, X } from 'lucide-react';
+import { KeyRound, ShieldCheck, X } from 'lucide-react';
 import { ADMIN_PIN } from '../data/defaultPortalData';
 
 interface PinModalProps {
@@ -9,16 +9,14 @@ interface PinModalProps {
 }
 
 export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [pin, setPin] = useState('');
-  const [showPin, setShowPin] = useState(false);
+  const [adminId, setAdminId] = useState('');
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
-      setPin('');
+      setAdminId('');
       setError('');
-      setShowPin(false);
       window.setTimeout(() => {
         inputRef.current?.focus();
       }, 60);
@@ -29,11 +27,11 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (pin.trim() === ADMIN_PIN) {
+    if (adminId.trim() === ADMIN_PIN) {
       setError('');
       onSuccess();
     } else {
-      setError('Invalid Admin ID. Please enter the authorized PIN.');
+      setError('Invalid Admin ID. Please enter the authorized ID to continue.');
     }
   };
 
@@ -52,15 +50,15 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess }
             </div>
             <div>
               <h2 id="pin-modal-title" className="font-display font-bold text-base sm:text-lg">
-                Admin Access Verification
+                Admin Login
               </h2>
-              <p className="text-xs text-blue-100/85">JIT Assessment Portal Controls</p>
+              <p className="text-xs text-blue-100/85">JIT Assessment &amp; Apps Portal</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close verification modal"
+            aria-label="Close admin login modal"
             className="w-8 h-8 rounded-lg flex items-center justify-center text-white/80 hover:text-white hover:bg-white/15 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -69,37 +67,30 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess }
 
         <form onSubmit={handleSubmit} className="p-6">
           <label
-            htmlFor="admin-pin-input"
+            htmlFor="admin-id-input"
             className="block text-sm font-semibold text-[#0B1E47] mb-2"
           >
-            Enter Admin ID / PIN
+            Enter Admin ID
           </label>
           <div className="relative">
-            <Lock
+            <KeyRound
               className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
               aria-hidden="true"
             />
             <input
               ref={inputRef}
-              id="admin-pin-input"
-              type={showPin ? 'text' : 'password'}
+              id="admin-id-input"
+              type="text"
               inputMode="numeric"
-              value={pin}
+              autoComplete="off"
+              value={adminId}
               onChange={(e) => {
-                setPin(e.target.value);
+                setAdminId(e.target.value);
                 if (error) setError('');
               }}
-              placeholder="Enter Admin PIN"
-              className="w-full h-11 pl-10 pr-10 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 font-mono text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
+              placeholder="Enter Admin ID"
+              className="w-full h-11 pl-10 pr-4 rounded-lg border border-slate-300 bg-slate-50 text-slate-900 font-mono text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-blue-600"
             />
-            <button
-              type="button"
-              onClick={() => setShowPin((prev) => !prev)}
-              aria-label={showPin ? 'Hide Admin ID' : 'Show Admin ID'}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-md flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200/60"
-            >
-              {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
           </div>
 
           {error && (

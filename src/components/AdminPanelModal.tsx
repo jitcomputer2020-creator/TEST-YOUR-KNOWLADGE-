@@ -3,6 +3,7 @@ import {
   Check,
   Gamepad2,
   Image as ImageIcon,
+  LayoutGrid,
   Pencil,
   Plus,
   RotateCcw,
@@ -10,21 +11,29 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { CATEGORY_META, GAME_ICON_OPTIONS } from '../data/defaultPortalData';
+import {
+  CATEGORY_META,
+  GAME_ICON_OPTIONS,
+  WEB_APP_ICON_OPTIONS,
+} from '../data/defaultPortalData';
 import {
   AssessmentCategory,
   GameCardItem,
   GameIconKey,
   HeaderBranding,
   TestCardItem,
+  WebAppCardItem,
+  WebAppIconKey,
 } from '../types/assessment';
 import { GameIcon } from './GameIcon';
+import { WebAppIcon } from './WebAppIcon';
 
 interface AdminPanelModalProps {
   isOpen: boolean;
   onClose: () => void;
   tests: TestCardItem[];
   games: GameCardItem[];
+  webApps: WebAppCardItem[];
   branding: HeaderBranding;
   onAddTest: (item: Omit<TestCardItem, 'id'>) => void;
   onUpdateTest: (item: TestCardItem) => void;
@@ -32,11 +41,14 @@ interface AdminPanelModalProps {
   onAddGame: (item: Omit<GameCardItem, 'id'>) => void;
   onUpdateGame: (item: GameCardItem) => void;
   onDeleteGame: (id: string) => void;
+  onAddWebApp: (item: Omit<WebAppCardItem, 'id'>) => void;
+  onUpdateWebApp: (item: WebAppCardItem) => void;
+  onDeleteWebApp: (id: string) => void;
   onUpdateBranding: (branding: HeaderBranding) => void;
   onResetDefaults: () => void;
 }
 
-type AdminSectionTab = 'tests' | 'games' | 'branding';
+type AdminSectionTab = 'tests' | 'games' | 'webapps' | 'branding';
 
 const CATEGORY_DEFAULT_ICON: Record<AssessmentCategory, string> = {
   interactive: 'trophy',
@@ -49,6 +61,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onClose,
   tests,
   games,
+  webApps,
   branding,
   onAddTest,
   onUpdateTest,
@@ -56,6 +69,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   onAddGame,
   onUpdateGame,
   onDeleteGame,
+  onAddWebApp,
+  onUpdateWebApp,
+  onDeleteWebApp,
   onUpdateBranding,
   onResetDefaults,
 }) => {
@@ -77,6 +93,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [gameIconKey, setGameIconKey] = useState<GameIconKey>('gamepad');
   const [gameCustomImageUrl, setGameCustomImageUrl] = useState('');
   const [gameFormError, setGameFormError] = useState('');
+
+  // Add / Edit Web App Form State
+  const [editingAppId, setEditingAppId] = useState<string | null>(null);
+  const [appName, setAppName] = useState('');
+  const [appCategory, setAppCategory] = useState('');
+  const [appUrl, setAppUrl] = useState('');
+  const [appDescription, setAppDescription] = useState('');
+  const [appIconKey, setAppIconKey] = useState<WebAppIconKey>('app-grid');
+  const [appCustomImageUrl, setAppCustomImageUrl] = useState('');
+  const [appFormError, setAppFormError] = useState('');
 
   // Branding Form State
   const [brandTitle, setBrandTitle] = useState(branding.title);
@@ -108,6 +134,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setGameFormError('');
   };
 
+  const resetAppForm = () => {
+    setEditingAppId(null);
+    setAppName('');
+    setAppCategory('');
+    setAppUrl('');
+    setAppDescription('');
+    setAppIconKey('app-grid');
+    setAppCustomImageUrl('');
+    setAppFormError('');
+  };
+
   const handleEditClick = (item: TestCardItem) => {
     setEditingId(item.id);
     setTitle(item.title);
@@ -125,6 +162,17 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setGameIconKey(item.iconKey);
     setGameCustomImageUrl(item.customImageUrl ?? '');
     setGameFormError('');
+  };
+
+  const handleEditAppClick = (item: WebAppCardItem) => {
+    setEditingAppId(item.id);
+    setAppName(item.name);
+    setAppCategory(item.category);
+    setAppUrl(item.url);
+    setAppDescription(item.description);
+    setAppIconKey(item.iconKey);
+    setAppCustomImageUrl(item.customImageUrl ?? '');
+    setAppFormError('');
   };
 
   const handleTestSubmit = (e: React.FormEvent) => {
@@ -207,6 +255,47 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     resetGameForm();
   };
 
+  const handleAppSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanName = appName.trim();
+    const cleanCategory = appCategory.trim() || 'Web App';
+    const cleanUrl = appUrl.trim();
+    const cleanDescription = appDescription.trim();
+    const cleanCustomImg = appCustomImageUrl.trim();
+
+    if (!cleanName || !cleanUrl) {
+      setAppFormError('Please provide both an App Name and a valid App URL.');
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(cleanUrl)) {
+      setAppFormError('App URL must start with https:// or http://');
+      return;
+    }
+
+    const payload: Omit<WebAppCardItem, 'id'> = {
+      name: cleanName,
+      category: cleanCategory,
+      url: cleanUrl,
+      description:
+        cleanDescription ||
+        'Browser-based utility and creative tool for JIT Computer Training Institute students.',
+      iconKey: appIconKey,
+      customImageUrl: cleanCustomImg || undefined,
+    };
+
+    if (editingAppId) {
+      onUpdateWebApp({
+        id: editingAppId,
+        ...payload,
+      });
+    } else {
+      onAddWebApp(payload);
+    }
+
+    resetAppForm();
+  };
+
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -233,6 +322,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleAppImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setAppCustomImageUrl(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleBrandingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdateBranding({
@@ -249,6 +351,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setConfirmReset(false);
     resetTestForm();
     resetGameForm();
+    resetAppForm();
     setBrandTitle('JIT Computer Training Institute');
     setBrandSubtitle('Jharna Institute of Technology');
     setBrandLogoUrl('/src/assets/images/jit_institute_logo_1795330747046.jpg');
@@ -310,6 +413,18 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             </button>
             <button
               type="button"
+              onClick={() => setSectionTab('webapps')}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors ${
+                sectionTab === 'webapps'
+                  ? 'bg-[#0B1E47] text-white'
+                  : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Manage Web Apps ({webApps.length})</span>
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setSectionTab('branding');
                 setBrandTitle(branding.title);
@@ -339,7 +454,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             ) : (
               <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1">
                 <span className="text-xs font-semibold text-red-800">
-                  Restore 16 tests &amp; 10 games?
+                  Restore all defaults?
                 </span>
                 <button
                   type="button"
@@ -761,6 +876,256 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             onClick={() => {
                               if (editingGameId === game.id) resetGameForm();
                               onDeleteGame(game.id);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+
+          {sectionTab === 'webapps' && (
+            <>
+              {/* Add / Edit Web App Form */}
+              <form
+                onSubmit={handleAppSubmit}
+                className="rounded-xl border border-slate-200 bg-slate-50/70 p-5 space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display font-bold text-base text-[#0B1E47]">
+                    {editingAppId ? 'Edit Web App Card' : 'Add New Web App'}
+                  </h3>
+                  {editingAppId && (
+                    <button
+                      type="button"
+                      onClick={resetAppForm}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-800"
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label
+                      htmlFor="admin-app-name"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      App Name *
+                    </label>
+                    <input
+                      id="admin-app-name"
+                      type="text"
+                      value={appName}
+                      onChange={(e) => setAppName(e.target.value)}
+                      placeholder="e.g., JIT VIDEO EDITOR"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-app-category"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Category / Tag
+                    </label>
+                    <input
+                      id="admin-app-category"
+                      type="text"
+                      value={appCategory}
+                      onChange={(e) => setAppCategory(e.target.value)}
+                      placeholder="e.g., Media Studio, Code Tool, Utility"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="admin-app-url"
+                    className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  >
+                    App URL *
+                  </label>
+                  <input
+                    id="admin-app-url"
+                    type="url"
+                    value={appUrl}
+                    onChange={(e) => setAppUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="admin-app-desc"
+                    className="block text-xs font-semibold text-slate-700 mb-1.5"
+                  >
+                    Short Description
+                  </label>
+                  <textarea
+                    id="admin-app-desc"
+                    rows={2}
+                    value={appDescription}
+                    onChange={(e) => setAppDescription(e.target.value)}
+                    placeholder="Briefly describe what this web app does..."
+                    className="w-full p-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                  <div>
+                    <label
+                      htmlFor="admin-app-icon"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Icon Style
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <WebAppIcon
+                        iconKey={appIconKey}
+                        customImageUrl={appCustomImageUrl || undefined}
+                        name={appName || 'App Preview'}
+                      />
+                      <select
+                        id="admin-app-icon"
+                        value={appIconKey}
+                        onChange={(e) => setAppIconKey(e.target.value as WebAppIconKey)}
+                        className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      >
+                        {WEB_APP_ICON_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-app-custom-img"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Custom Icon Image URL (Optional)
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        id="admin-app-custom-img"
+                        type="text"
+                        value={appCustomImageUrl}
+                        onChange={(e) => setAppCustomImageUrl(e.target.value)}
+                        placeholder="https://... or upload image below"
+                        className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                      <div className="flex items-center gap-2">
+                        <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer">
+                          <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                          <span>Upload Icon</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAppImageFileChange}
+                            className="sr-only"
+                          />
+                        </label>
+                        {appCustomImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setAppCustomImageUrl('')}
+                            className="text-xs font-semibold text-slate-500 hover:text-red-600"
+                          >
+                            Clear Custom Image
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {appFormError && (
+                  <p role="alert" className="text-xs font-semibold text-red-600">
+                    {appFormError}
+                  </p>
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-sm font-semibold transition-colors"
+                  >
+                    {editingAppId ? (
+                      <>
+                        <Check className="w-4 h-4" aria-hidden="true" />
+                        <span>Save App Changes</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" aria-hidden="true" />
+                        <span>Add Web App</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+
+              {/* Existing Web Apps List */}
+              <div>
+                <h3 className="font-display font-bold text-sm text-[#0B1E47] mb-3">
+                  Published Web Apps ({webApps.length})
+                </h3>
+                <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl overflow-hidden bg-white">
+                  {webApps.length === 0 ? (
+                    <div className="p-6 text-center text-sm text-slate-500">
+                      No web apps currently configured. Add a web app above or reset to defaults.
+                    </div>
+                  ) : (
+                    webApps.map((app) => (
+                      <div
+                        key={app.id}
+                        className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition-colors"
+                      >
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          <WebAppIcon
+                            iconKey={app.iconKey}
+                            customImageUrl={app.customImageUrl}
+                            name={app.name}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-blue-700 mb-0.5">
+                              {app.category || 'Web App'}
+                            </div>
+                            <div className="font-display font-bold text-sm text-[#0B1E47] truncate">
+                              {app.name}
+                            </div>
+                            <div className="text-xs text-slate-500 truncate mt-0.5">{app.url}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleEditAppClick(app)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editingAppId === app.id) resetAppForm();
+                              onDeleteWebApp(app.id);
                             }}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
                           >

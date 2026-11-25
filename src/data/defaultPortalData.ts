@@ -4,6 +4,8 @@ import {
   HeaderBranding,
   PortalState,
   TestCardItem,
+  WebAppCardItem,
+  WebAppIconKey,
 } from '../types/assessment';
 
 export const STORAGE_KEY = 'jit_quiz_portal_v1';
@@ -254,9 +256,33 @@ export const GAME_ICON_OPTIONS: { value: GameIconKey; label: string }[] = [
   { value: 'gamepad', label: 'Classic Gamepad' },
 ];
 
+export const DEFAULT_WEB_APPS: WebAppCardItem[] = [
+  {
+    id: 'webapp-1',
+    name: 'JIT VIDEO EDITOR',
+    description:
+      'Professional browser-based multi-track video editing studio with filters, effects, and overlays.',
+    category: 'Media Studio',
+    url: 'https://jit-video-editor.vercel.app/',
+    iconKey: 'video-editor',
+  },
+];
+
+export const WEB_APP_ICON_OPTIONS: { value: WebAppIconKey; label: string }[] = [
+  { value: 'video-editor', label: 'Video Editor Studio (Filmstrip + Play)' },
+  { value: 'code-studio', label: 'Code & Web IDE' },
+  { value: 'design-canvas', label: 'Graphic Design Studio' },
+  { value: 'cloud-docs', label: 'Cloud Office & Documents' },
+  { value: 'presentation', label: 'Presentation & Slides' },
+  { value: 'utility-tools', label: 'Student Utility Suite' },
+  { value: 'globe-app', label: 'Web Portal / Browser Tool' },
+  { value: 'app-grid', label: 'General Web App' },
+];
+
 export const DEFAULT_PORTAL_STATE: PortalState = {
   tests: DEFAULT_TESTS,
   games: DEFAULT_GAMES,
+  webApps: DEFAULT_WEB_APPS,
   branding: DEFAULT_BRANDING,
 };
 
