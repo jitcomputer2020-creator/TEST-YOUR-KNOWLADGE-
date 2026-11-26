@@ -35,7 +35,25 @@ function loadPortalState(): PortalState {
     const parsed = JSON.parse(raw) as Partial<PortalState>;
     const tests = Array.isArray(parsed.tests) ? parsed.tests : DEFAULT_TESTS;
     const games = Array.isArray(parsed.games) ? parsed.games : DEFAULT_GAMES;
-    const webApps = Array.isArray(parsed.webApps) ? parsed.webApps : DEFAULT_WEB_APPS;
+
+    const savedWebApps = Array.isArray(parsed.webApps) ? parsed.webApps : DEFAULT_WEB_APPS;
+    const permanentDefaults = DEFAULT_WEB_APPS.filter((item) => item.isPermanent);
+    const mergedWebApps = [...savedWebApps];
+
+    for (const permApp of permanentDefaults) {
+      const existsIndex = mergedWebApps.findIndex(
+        (w) => w.id === permApp.id || w.url === permApp.url
+      );
+      if (existsIndex === -1) {
+        mergedWebApps.push(permApp);
+      } else {
+        mergedWebApps[existsIndex] = {
+          ...mergedWebApps[existsIndex],
+          isPermanent: true,
+        };
+      }
+    }
+
     const branding =
       parsed.branding && typeof parsed.branding.title === 'string'
         ? {
@@ -45,7 +63,7 @@ function loadPortalState(): PortalState {
           }
         : DEFAULT_BRANDING;
 
-    return { tests, games, webApps, branding };
+    return { tests, games, webApps: mergedWebApps, branding };
   } catch {
     return DEFAULT_PORTAL_STATE;
   }
@@ -175,7 +193,7 @@ export function App() {
   const handleDeleteWebApp = (id: string) => {
     setPortalState((prev) => ({
       ...prev,
-      webApps: prev.webApps.filter((item) => item.id !== id),
+      webApps: prev.webApps.filter((item) => item.id !== id || Boolean(item.isPermanent)),
     }));
   };
 

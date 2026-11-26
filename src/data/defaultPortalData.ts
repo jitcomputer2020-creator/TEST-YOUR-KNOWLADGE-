@@ -265,11 +265,25 @@ export const DEFAULT_WEB_APPS: WebAppCardItem[] = [
     category: 'Media Studio',
     url: 'https://jit-video-editor.vercel.app/',
     iconKey: 'video-editor',
+    ctaLabel: 'Open App',
+  },
+  {
+    id: 'webapp-2',
+    name: 'JIT 3D CARTOON STUDIO',
+    description:
+      'Create 3D animated stories, customize characters, and build interactive scenes directly in your browser.',
+    category: '3D Animation Studio',
+    url: 'https://jit-cartoon-studio.vercel.app/',
+    iconKey: 'cartoon-studio',
+    badgeTag: '3D Studio',
+    ctaLabel: 'Launch Studio',
+    isPermanent: true,
   },
 ];
 
 export const WEB_APP_ICON_OPTIONS: { value: WebAppIconKey; label: string }[] = [
   { value: 'video-editor', label: 'Video Editor Studio (Filmstrip + Play)' },
+  { value: 'cartoon-studio', label: '3D Cartoon Studio (3D Cube + Clapperboard)' },
   { value: 'code-studio', label: 'Code & Web IDE' },
   { value: 'design-canvas', label: 'Graphic Design Studio' },
   { value: 'cloud-docs', label: 'Cloud Office & Documents' },

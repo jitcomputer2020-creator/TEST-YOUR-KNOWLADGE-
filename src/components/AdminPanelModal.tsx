@@ -98,6 +98,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [editingAppId, setEditingAppId] = useState<string | null>(null);
   const [appName, setAppName] = useState('');
   const [appCategory, setAppCategory] = useState('');
+  const [appBadgeTag, setAppBadgeTag] = useState('');
   const [appUrl, setAppUrl] = useState('');
   const [appDescription, setAppDescription] = useState('');
   const [appIconKey, setAppIconKey] = useState<WebAppIconKey>('app-grid');
@@ -138,6 +139,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setEditingAppId(null);
     setAppName('');
     setAppCategory('');
+    setAppBadgeTag('');
     setAppUrl('');
     setAppDescription('');
     setAppIconKey('app-grid');
@@ -168,6 +170,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     setEditingAppId(item.id);
     setAppName(item.name);
     setAppCategory(item.category);
+    setAppBadgeTag(item.badgeTag ?? '');
     setAppUrl(item.url);
     setAppDescription(item.description);
     setAppIconKey(item.iconKey);
@@ -259,6 +262,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     e.preventDefault();
     const cleanName = appName.trim();
     const cleanCategory = appCategory.trim() || 'Web App';
+    const cleanBadgeTag = appBadgeTag.trim();
     const cleanUrl = appUrl.trim();
     const cleanDescription = appDescription.trim();
     const cleanCustomImg = appCustomImageUrl.trim();
@@ -273,15 +277,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       return;
     }
 
+    const existingApp = editingAppId ? webApps.find((a) => a.id === editingAppId) : undefined;
+
     const payload: Omit<WebAppCardItem, 'id'> = {
       name: cleanName,
       category: cleanCategory,
+      badgeTag: cleanBadgeTag || undefined,
       url: cleanUrl,
       description:
         cleanDescription ||
         'Browser-based utility and creative tool for JIT Computer Training Institute students.',
       iconKey: appIconKey,
       customImageUrl: cleanCustomImg || undefined,
+      ctaLabel: existingApp?.ctaLabel,
+      isPermanent: existingApp?.isPermanent,
     };
 
     if (editingAppId) {
@@ -913,7 +922,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label
                       htmlFor="admin-app-name"
@@ -943,7 +952,24 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       type="text"
                       value={appCategory}
                       onChange={(e) => setAppCategory(e.target.value)}
-                      placeholder="e.g., Media Studio, Code Tool, Utility"
+                      placeholder="e.g., Media Studio, Utility"
+                      className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="admin-app-badge"
+                      className="block text-xs font-semibold text-slate-700 mb-1.5"
+                    >
+                      Corner Badge (Optional)
+                    </label>
+                    <input
+                      id="admin-app-badge"
+                      type="text"
+                      value={appBadgeTag}
+                      onChange={(e) => setAppBadgeTag(e.target.value)}
+                      placeholder="e.g., New, 3D Studio"
                       className="w-full h-10 px-3 rounded-lg border border-slate-300 bg-white text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600"
                     />
                   </div>
@@ -1113,6 +1139,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
+                          {app.isPermanent && (
+                            <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              Permanent Default
+                            </span>
+                          )}
                           <button
                             type="button"
                             onClick={() => handleEditAppClick(app)}
@@ -1121,17 +1152,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                             <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                             <span>Edit</span>
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (editingAppId === app.id) resetAppForm();
-                              onDeleteWebApp(app.id);
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                            <span>Delete</span>
-                          </button>
+                          {!app.isPermanent && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editingAppId === app.id) resetAppForm();
+                                onDeleteWebApp(app.id);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 bg-red-50 hover:bg-red-100 transition-colors"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                              <span>Delete</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))

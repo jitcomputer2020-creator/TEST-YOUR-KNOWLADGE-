@@ -35,6 +35,7 @@ export interface GameCardItem {
 
 export type WebAppIconKey =
   | 'video-editor'
+  | 'cartoon-studio'
   | 'code-studio'
   | 'design-canvas'
   | 'cloud-docs'
@@ -51,6 +52,9 @@ export interface WebAppCardItem {
   url: string;
   iconKey: WebAppIconKey;
   customImageUrl?: string;
+  badgeTag?: string;
+  ctaLabel?: string;
+  isPermanent?: boolean;
 }
 
 export interface HeaderBranding {

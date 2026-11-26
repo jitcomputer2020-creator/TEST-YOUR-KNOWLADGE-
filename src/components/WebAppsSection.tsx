@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpRight, LayoutGrid } from 'lucide-react';
+import { ArrowUpRight, LayoutGrid, Play } from 'lucide-react';
 import { WebAppCardItem } from '../types/assessment';
 import { WEB_APP_ICON_THEMES, WebAppIcon } from './WebAppIcon';
 
@@ -8,6 +8,13 @@ interface WebAppsSectionProps {
 }
 
 export const WebAppsSection: React.FC<WebAppsSectionProps> = ({ webApps }) => {
+  const gridColsClass =
+    webApps.length === 1
+      ? 'grid-cols-1 max-w-md'
+      : webApps.length === 2
+        ? 'grid-cols-1 md:grid-cols-2'
+        : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
+
   return (
     <section
       id="web-apps"
@@ -48,16 +55,21 @@ export const WebAppsSection: React.FC<WebAppsSectionProps> = ({ webApps }) => {
             No web apps are currently listed. Add apps anytime from the Admin Panel.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`grid ${gridColsClass} gap-6 items-stretch`}>
             {webApps.map((app, index) => {
               const theme =
                 WEB_APP_ICON_THEMES[app.iconKey] ?? WEB_APP_ICON_THEMES['app-grid'];
               const paddedNum = String(index + 1).padStart(2, '0');
+              const isCartoonStudio = app.iconKey === 'cartoon-studio';
 
               return (
                 <article
                   key={app.id}
-                  className="card-3d-lift flex flex-col justify-between rounded-2xl p-6 bg-white border border-slate-200 shadow-[0_6px_20px_-6px_rgba(11,30,71,0.08)] hover:shadow-[0_18px_36px_-10px_rgba(29,78,216,0.18)] hover:border-blue-300"
+                  className={`game-card-hover group relative h-full flex flex-col justify-between rounded-2xl p-6 bg-white border border-slate-200 shadow-[0_6px_20px_-6px_rgba(11,30,71,0.08)] ${
+                    isCartoonStudio
+                      ? 'hover:border-violet-400/75 hover:shadow-[0_20px_42px_-10px_rgba(109,40,217,0.24)]'
+                      : 'hover:border-blue-400/75 hover:shadow-[0_20px_42px_-10px_rgba(29,78,216,0.22)]'
+                  }`}
                 >
                   <div>
                     <div className="flex items-start justify-between gap-4 mb-5">
@@ -66,9 +78,16 @@ export const WebAppsSection: React.FC<WebAppsSectionProps> = ({ webApps }) => {
                         customImageUrl={app.customImageUrl}
                         name={app.name}
                       />
-                      <span className="font-mono text-xs font-semibold tabular-nums text-slate-400">
-                        #{paddedNum}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {app.badgeTag && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-[0_0_14px_rgba(124,58,237,0.4)]">
+                            {app.badgeTag}
+                          </span>
+                        )}
+                        <span className="font-mono text-xs font-semibold tabular-nums text-slate-400">
+                          #{paddedNum}
+                        </span>
+                      </div>
                     </div>
 
                     <div className={`text-xs font-semibold tracking-wide mb-1.5 ${theme.categoryText}`}>
@@ -89,9 +108,14 @@ export const WebAppsSection: React.FC<WebAppsSectionProps> = ({ webApps }) => {
                       href={app.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-[#0B1E47] to-[#1D4ED8] hover:from-[#102A63] hover:to-[#1E40AF] text-white font-display font-semibold text-sm shadow-sm transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-white font-display font-semibold text-sm shadow-sm transition-all whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 ${
+                        isCartoonStudio
+                          ? 'bg-gradient-to-r from-violet-600 via-indigo-600 to-blue-600 hover:from-violet-700 hover:via-indigo-700 hover:to-blue-700'
+                          : 'bg-gradient-to-r from-[#0B1E47] to-[#1D4ED8] hover:from-[#102A63] hover:to-[#1E40AF]'
+                      }`}
                     >
-                      <span>Open App</span>
+                      <Play className="w-3.5 h-3.5 fill-current shrink-0" aria-hidden="true" />
+                      <span>{app.ctaLabel || 'Open App'}</span>
                       <ArrowUpRight className="w-4 h-4 shrink-0" aria-hidden="true" />
                     </a>
                   </div>
